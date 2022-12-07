@@ -63,6 +63,38 @@ def main():
         #backwardElimination(normalized_instances, num_instances, num_features, accuracy)
     
 
+    
+    
+def normalize(data, num_features, num_instances):
+
+    mean = []
+    x = 0;
+    for i in range(1, num_features + 1):
+        for row in data:
+            x = x + row[i]
+        x = x/num_instances
+        mean.append(x)
+
+    std = []
+    x=0
+    for i in range(1, num_features + 1):
+        for row in data:
+            x = x + (row[i] - mean[i-1]) * (row[i] - mean[i-1])
+        x = math.sqrt(x/num_instances)
+        
+        std.append(x)
+
+  
+  
+  
+    for i in range(num_instances):
+        for j in range(1, num_features + 1):
+            data[i][j] = ((data[i][j] - mean[j-1]) / std[j-1])
+
+    return data
+
+
+
 
 
 
