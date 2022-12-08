@@ -126,6 +126,91 @@ def oneOutValidator(data, feature_subset, num_instances):
     return ((correct / num_instances) * 100)
 
 
+def forwardSelection(data, num_instances, num_features):
+
+    encountered = {-5: '001'}
+    del encountered[-5]
+    final_set = {-5: '001'}
+    del final_set[-5]
+
+    topAccuracy = 0.0
+
+    for i in range(num_features):
+        add_this = 0
+        local_add = 0
+        localAccuracy = 0.0
+        j=1
+        while j <= num_features:
+            
+            
+            if encountered.get(j) == None:
+                
+                temp_subset = (list(encountered.keys()))
+                
+                temp_subset.append(j)
+
+                accuracy = oneOutValidator(data, temp_subset, num_instances)
+                print '\tUsing feature(s) ', temp_subset, ' accuracy is ', accuracy, '%'
+                if accuracy > topAccuracy:
+                    topAccuracy = accuracy
+                    add_this = j
+                else:
+                    localAccuracy = accuracy
+                    local_add = j
+            j = j+1
+        if add_this != 0:
+            encountered[add_this] = '001'
+            final_set[add_this] = '001'
+            print '\n\nFeature set ', (list(encountered.keys())), ' was best, accuracy is ', topAccuracy, '%\n\n'
+        else:
+            print '\n\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)'
+            encountered[local_add] = '001'
+            print 'Feature set ', (list(encountered.keys())), ' was best, accuracy is ', localAccuracy, '%\n\n'
+        
+
+    print 'Finished search!! The best feature subset is', list(final_set.keys()), ' which has an accuracy of accuracy: ', topAccuracy, '%'
+
+def backwardElimination(data, num_instances, num_features, topAcc):
+
+    encountered = {-1: '001'}
+    final_set = {-1: '001'}
+    for i in range(num_features):
+        encountered[i+1] = '001'
+        final_set[i+1] = '001'
+    
+    del encountered[-1]
+    del final_set[-1]
+    for i in range(num_features):
+        remove_this = 0
+        local_remove = 0
+        localAccuracy = 0.0
+        
+        for j in range(num_features):
+            
+            if encountered.get(j+1) != None:
+                temp_subset = (list(encountered.keys()))
+                temp_subset.remove(j+1)
+                accuracy = oneOutValidator(data, temp_subset, num_instances)
+                
+                if accuracy > topAcc:
+                    topAcc = accuracy
+                    remove_this = j+1
+                else:
+                    localAccuracy = accuracy
+                    local_remove = j+1
+                    
+                print '\tUsing feature(s) ', temp_subset, ' accuracy is ', accuracy, '%'
+                    
+        if remove_this != 0:
+            del encountered[remove_this]
+            del final_set[remove_this]
+            print '\n\nFeature set ', (list(encountered.keys())), ' was best, accuracy is ', topAcc, '%\n\n'
+        else:
+            print '\n\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)'
+            del encountered[local_remove]
+            print 'Feature set ', (list(encountered.keys())), ' was best, accuracy is ', localAccuracy, '%\n\n'
+
+    print 'Finished search!! The best feature subset is', list(final_set.keys()), ' which has an accuracy of accuracy: ', topAcc, '%'
 
 
 
