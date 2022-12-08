@@ -95,7 +95,35 @@ def normalize(data, num_features, num_instances):
 
 
 
+def nearestNeighborClassifier(data, point, feature_subset, num_instances):
 
+    nearestNeighbor = 0
+    shortest_distance = float('inf')
+    for i in range(num_instances):
+        
+        if point != i:
+            distance = 0
+            for j in feature_subset:
+                distance = distance + ((data[i][j] - data[point][j]) * (data[i][j] - data[point][j]))
+
+            distance = math.sqrt(distance)
+
+            if shortest_distance > distance:
+                nearestNeighbor = i
+                shortest_distance = distance
+
+    return nearestNeighbor
+
+
+def oneOutValidator(data, feature_subset, num_instances):
+    correct = 0.0
+    for i in range(num_instances):
+        neighbor = nearestNeighborClassifier(data, i, feature_subset, num_instances)
+
+        if data[neighbor][0] == data[i][0]:
+            correct = correct + 1
+
+    return ((correct / num_instances) * 100)
 
 
 
