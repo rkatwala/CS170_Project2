@@ -58,9 +58,9 @@ def main():
     print 'Beginning search.\n\n'
 
     if choice == 1:
-        #forwardSelection(normalized_instances, num_instances, num_features)
+        forwardSelection(normalized_instances, num_instances, num_features)
     elif choice == 2:
-        #backwardElimination(normalized_instances, num_instances, num_features, accuracy)
+        backwardElimination(normalized_instances, num_instances, num_features, accuracy)
     
 
     
@@ -154,7 +154,7 @@ def forwardSelection(data, num_instances, num_features):
                 if accuracy > topAccuracy:
                     topAccuracy = accuracy
                     add_this = j
-                else:
+                if accuracy > localAccuracy:
                     localAccuracy = accuracy
                     local_add = j
             j = j+1
@@ -195,7 +195,7 @@ def backwardElimination(data, num_instances, num_features, topAcc):
                 if accuracy > topAcc:
                     topAcc = accuracy
                     remove_this = j+1
-                else:
+                if accuracy > localAccuracy:
                     localAccuracy = accuracy
                     local_remove = j+1
                     
@@ -211,7 +211,6 @@ def backwardElimination(data, num_instances, num_features, topAcc):
             print 'Feature set ', (list(encountered.keys())), ' was best, accuracy is ', localAccuracy, '%\n\n'
 
     print 'Finished search!! The best feature subset is', list(final_set.keys()), ' which has an accuracy of accuracy: ', topAcc, '%'
-
 
 
 
