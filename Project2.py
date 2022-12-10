@@ -14,22 +14,22 @@ def main():
         raise IOError('Invalid file. Exiting...')
 
   
-    firstLine = data.readline()
+    first_line = data.readline()
 
-    num_features = len(firstLine.split()) - 1
+    total_features = len(first_line.split()) - 1
 
     
     data.seek(0)
-    num_instances = 0;
+    total_instances = 0;
     for line in data:
-        num_instances = num_instances + 1
+        total_instances = total_instances + 1
 
    
     data.seek(0)
 
     # Store data into variable/array
     instances = []
-    for i in range(num_instances):
+    for i in range(total_instances):
         temp = [];
         for j in data.readline().split():
             temp.append(float(j))
@@ -40,178 +40,146 @@ def main():
     print '1. Forward Selection'
     print '2. Backward Elimination'
     
-    choice = int(raw_input())
+    input = int(raw_input())
   
-    print 'This dataset has ' + str(num_features) + ' features (not including the class attribute), with ' + str(num_instances) + ' instances.'
+    print 'This dataset has ' + str(total_features) + ' features (not including the class attribute), with ' + str(total_instances) + ' instances.'
 
-    normalized_instances = normalize(instances, num_features, num_instances)
+    normalized_instances = normalize(instances, total_features, total_instances)
 
  
-    all_features = []
-    for i in range(num_features):
-        all_features.append(i+1)
-
-    accuracy = oneOutValidator(normalized_instances, all_features, num_instances)
-    print 'Running nearest neighbor with all ', num_features, ' features, using "leaving-one-out" evaluation, I get an accuracy of ', accuracy, '%.'
-
-
-    print 'Beginning search.\n\n'
-
-    if choice == 1:
-        forwardSelection(normalized_instances, num_instances, num_features)
-    elif choice == 2:
-        backwardElimination(normalized_instances, num_instances, num_features, accuracy)
-    
+    features = []
+    for i in range(total_features):
+        features.append(i+1)
 
     
-    
-def normalize(data, num_features, num_instances):
 
-    mean = []
-    x = 0;
-    for i in range(1, num_features + 1):
-        for row in data:
-            x = x + row[i]
-        x = x/num_instances
-        mean.append(x)
-
-    std = []
-    x=0
-    for i in range(1, num_features + 1):
-        for row in data:
-            x = x + (row[i] - mean[i-1]) * (row[i] - mean[i-1])
-        x = math.sqrt(x/num_instances)
-        
-        std.append(x)
-
-  
-  
-  
-    for i in range(num_instances):
-        for j in range(1, num_features + 1):
-            data[i][j] = ((data[i][j] - mean[j-1]) / std[j-1])
-
-    return data
+    if input == 1:
+        accuracy = oneOutValidator(normalized_instances, features, total_instances)
+        print 'Running nearest neighbor with all ', total_features, ' features, using "leaving-one-out" evaluation, I get an accuracy of ', accuracy, '%.\nBeginning Search.\n'
+        forwardSelection(normalized_instances, total_instances, total_features)
+    elif input == 2:
+        accuracy = oneOutValidator(normalized_instances, features, total_instances)
+        print 'Running nearest neighbor with all ', total_features, ' features, using "leaving-one-out" evaluation, I get an accuracy of ', accuracy, '%.\nBeginning Search.\n'
+        backwardElimination(normalized_instances, total_instances, total_features, accuracy)
 
 
 
-def nearestNeighborClassifier(data, point, feature_subset, num_instances):
+def nearestNeighborClassifier(data, point, features_used, total_instances):
 
-    nearestNeighbor = 0
+    nearest_neighbor = 0
     shortest_distance = float('inf')
-    for i in range(num_instances):
+    for instance in range(total_instances):
         
-        if point != i:
+        if point != instance:
             distance = 0
-            for j in feature_subset:
-                distance = distance + ((data[i][j] - data[point][j]) * (data[i][j] - data[point][j]))
+            for feature in features_used:
+                distance = distance + ((data[instance][feature] - data[point][feature]) * (data[instance][feature] - data[point][feature]))
 
             distance = math.sqrt(distance)
 
             if shortest_distance > distance:
-                nearestNeighbor = i
+                nearest_neighbor = instance
                 shortest_distance = distance
 
-    return nearestNeighbor
+    return nearest_neighbor
 
 
-def oneOutValidator(data, feature_subset, num_instances):
-    correct = 0.0
-    for i in range(num_instances):
-        neighbor = nearestNeighborClassifier(data, i, feature_subset, num_instances)
+def oneOutValidator(data, features_used, total_instances):
+    counter = 0.0
+    for instance in range(total_instances):
+        neighbor = nearestNeighborClassifier(data, instance, features_used, total_instances)
 
-        if data[neighbor][0] == data[i][0]:
-            correct = correct + 1
+        if data[neighbor][0] == data[instance][0]:
+            counter = counter + 1
 
-    return ((correct / num_instances) * 100)
+    return ((counter / total_instances) * 100)
 
 
-def forwardSelection(data, num_instances, num_features):
+def forwardSelection(data, total_instances, total_features):
 
-    encountered = {-5: '001'}
-    del encountered[-5]
-    final_set = {-5: '001'}
-    del final_set[-5]
+    features_used = {-5: '001'}
+    del features_used[-5]
+    full_set = {-5: '001'}
+    del full_set[-5]
 
-    topAccuracy = 0.0
+    top_accuracy = 0.0
 
-    for i in range(num_features):
-        add_this = 0
-        local_add = 0
-        localAccuracy = 0.0
+    for i in range(total_features):
+        new_feature = 0
+        feature_add = 0
+        local_accuracy = 0.0
         j=1
-        while j <= num_features:
+        while j <= total_features:
             
             
-            if encountered.get(j) == None:
+            if features_used.get(j) == None:
                 
-                temp_subset = (list(encountered.keys()))
+                temp_features_used = (list(features_used.keys()))
                 
-                temp_subset.append(j)
+                temp_features_used.append(j)
 
-                accuracy = oneOutValidator(data, temp_subset, num_instances)
-                print '\tUsing feature(s) ', temp_subset, ' accuracy is ', accuracy, '%'
-                if accuracy > topAccuracy:
-                    topAccuracy = accuracy
-                    add_this = j
-                if accuracy > localAccuracy:
-                    localAccuracy = accuracy
-                    local_add = j
+                accuracy = oneOutValidator(data, temp_features_used, total_instances)
+                print '\tUsing feature(s) ', temp_features_used, ' accuracy is ', accuracy, '%'
+                if accuracy > top_accuracy:
+                    top_accuracy = accuracy
+                    feature_add = j
+                if accuracy > local_accuracy:
+                    local_accuracy = accuracy
+                    new_feature = j
             j = j+1
-        if add_this != 0:
-            encountered[add_this] = '001'
-            final_set[add_this] = '001'
-            print '\n\nFeature set ', (list(encountered.keys())), ' was best, accuracy is ', topAccuracy, '%\n\n'
+        if feature_add != 0:
+            features_used[feature_add] = '001'
+            full_set[feature_add] = '001'
+            print '\n\nFeature set ', (list(features_used.keys())), ' was best, accuracy is ', top_accuracy, '%\n\n'
         else:
             print '\n\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)'
-            encountered[local_add] = '001'
-            print 'Feature set ', (list(encountered.keys())), ' was best, accuracy is ', localAccuracy, '%\n\n'
+            features_used[new_feature] = '001'
+            print 'Feature set ', (list(features_used.keys())), ' was best, accuracy is ', local_accuracy, '%\n\n'
         
 
-    print 'Finished search!! The best feature subset is', list(final_set.keys()), ' which has an accuracy of accuracy: ', topAccuracy, '%'
+    print 'Finished search!! The best feature subset is', list(full_set.keys()), ' which has an accuracy of accuracy: ', top_accuracy, '%'
 
-def backwardElimination(data, num_instances, num_features, topAcc):
+def backwardElimination(data, total_instances, total_features, top_accuracy):
 
-    encountered = {-1: '001'}
-    final_set = {-1: '001'}
-    for i in range(num_features):
-        encountered[i+1] = '001'
-        final_set[i+1] = '001'
+    features_left = {-1: '001'}
+    full_set = {-1: '001'}
+    for i in range(total_features):
+        features_left[i+1] = '001'
+        full_set[i+1] = '001'
     
-    del encountered[-1]
-    del final_set[-1]
-    for i in range(num_features):
-        remove_this = 0
-        local_remove = 0
-        localAccuracy = 0.0
+    del features_left[-1]
+    del full_set[-1]
+    for i in range(total_features):
+        explored_feature = 0
+        remove_feature = 0
+        local_accuracy = 0.0
         
-        for j in range(num_features):
+        for j in range(total_features):
             
-            if encountered.get(j+1) != None:
-                temp_subset = (list(encountered.keys()))
-                temp_subset.remove(j+1)
-                accuracy = oneOutValidator(data, temp_subset, num_instances)
+            if features_left.get(j+1) != None:
+                temp_features_left = (list(features_left.keys()))
+                temp_features_left.remove(j+1)
+                accuracy = oneOutValidator(data, temp_features_left, total_instances)
                 
-                if accuracy > topAcc:
-                    topAcc = accuracy
-                    remove_this = j+1
-                if accuracy > localAccuracy:
-                    localAccuracy = accuracy
-                    local_remove = j+1
+                if accuracy > top_accuracy:
+                    top_accuracy = accuracy
+                    explored_feature = j+1
+                if accuracy > local_accuracy:
+                    local_accuracy = accuracy
+                    remove_feature = j+1
                     
-                print '\tUsing feature(s) ', temp_subset, ' accuracy is ', accuracy, '%'
+                print '\tUsing feature(s) ', temp_features_left, ' accuracy is ', accuracy, '%'
                     
-        if remove_this != 0:
-            del encountered[remove_this]
-            del final_set[remove_this]
-            print '\n\nFeature set ', (list(encountered.keys())), ' was best, accuracy is ', topAcc, '%\n\n'
+        if explored_feature != 0:
+            del features_left[explored_feature]
+            del full_set[explored_feature]
+            print '\n\nFeature set ', (list(features_left.keys())), ' was best, accuracy is ', top_accuracy, '%\n\n'
         else:
             print '\n\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)'
-            del encountered[local_remove]
-            print 'Feature set ', (list(encountered.keys())), ' was best, accuracy is ', localAccuracy, '%\n\n'
+            del features_left[remove_feature]
+            print 'Feature set ', (list(features_left.keys())), ' was best, accuracy is ', local_accuracy, '%\n\n'
 
-    print 'Finished search!! The best feature subset is', list(final_set.keys()), ' which has an accuracy of accuracy: ', topAcc, '%'
-
+    print 'Finished search!! The best feature subset is', list(full_set.keys()), ' which has an accuracy of accuracy: ', top_accuracy, '%'
 
 
 
